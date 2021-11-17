@@ -6,13 +6,7 @@ import discord
 from discord.ext import commands
 from pathlib import Path
 
-intents = discord.Intents(messages=True, bans=True, guilds=True)
-intents.reactions = True
-intents.guild_messages = True
-intents.typing = True
-intents.members = True
-intents.voice_states = True
-
+intents = discord.Intents.all()
 import json
 
 with open('./config/config.json', 'r') as configFile:
@@ -35,14 +29,36 @@ class NewHelpName(commands.MinimalHelpCommand):
             embed.set_footer(text='')
             await destination.send(embed=embed)
 
+def get_prefix(bot, message):
+    with open('./config/prefixes.json', 'r') as prefixFile:
+        prefixes = json.load(prefixFile)
+        try:
+            prefix_server = prefixes.get(str(message.guild.id))
+        except AttributeError:  
+            return "!"
+
+
+        if prefix_server is None:
+            prefix_server = "!" 
+        data = prefix_server
+        return commands.when_mentioned_or(data)(bot, message)
+
 bot = commands.Bot(
-    command_prefix=commands.when_mentioned_or('!c'),
+    command_prefix=get_prefix,
     description=description,
     owner_id=219410026631135232,
     case_insensitive=True,
     intents=intents,
     help_command=NewHelpName()
 )
+
+bot.config_token = data["token"]
+bot.cwd = cwd
+
+#@bot.event
+#async def on_message(message):
+#    if bot.user.mentioned_in(message):
+#        await message.channel.send("You can type `!c help` to see all the commands available.")
 
 @bot.event
 async def on_ready():
